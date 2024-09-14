@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from api.database.models import User # 屋台モデル
 from pydantic import BaseModel
-
+from api.routers.auth import get_current_user
 router = APIRouter()
 
 # Pydanticスキーマ
@@ -17,7 +17,6 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
-    password: str
     email: str 
 
     class Config:
@@ -29,11 +28,6 @@ def create_stall(user: UserCreate):
     return JSONResponse({'is_success': User.create(username=user.username, password=user.password, email=user.email)})
 
 # 取得エンドポイント
-@router.get("/users/", response_model=List[UserResponse])
-def get_stalls():
-    try:
-        # Userテーブルから全レコードを取得
-        users = User.get_list()
-        return users
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/users/", response_model=UserResponse)
+def get_user_by_token(user: User=Depends(get_current_user)):
+    return user
