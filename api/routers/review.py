@@ -88,7 +88,7 @@ def get_reviews_by_user_id(user_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 # レビューの平均値のランキングtop3取得するエンドポイント
-@router.get("/reviews/top-ranking", response_model=Reviewranking)
+@router.get("/reviews/top-ranking")
 def get_rating_ranking():
     try:
         all_reviews = Review.get_list()
@@ -107,9 +107,26 @@ def get_rating_ranking():
         
         sorted_stalls = sorted(average_ratings.items(), key=lambda x: x[1], reverse=True)[:3]
         
-        ranking_list = [StallResponse.from_orm(Stall.get_by_id(stall_id)) for stall_id, _ in sorted_stalls]
+        ranking_list = [(Stall.get_by_id(stall_id)) for stall_id, _ in sorted_stalls]
+        res = []
+        for stall in ranking_list:
+            all_reviews = Review.get_by_stall_id(stall.id)
+            average_rating = sum([review.rating for review in all_reviews]) / len(all_reviews)
+            rating_count = len(all_reviews)
+            rating_distribution = [0, 0, 0, 0, 0]
+            for review in all_reviews:
+                rating_distribution[review.rating - 1] += 1
+            res_dict = {
+                "stall_name": stall.stall_name,
+                "thumbnail_URL": stall.thumbnail_URL,
+                "ownwer_name": stall.owner_name,
+                "average_rating": average_rating,
+                "rating_count": rating_count,
+                "rating_distribution": rating_distribution
+            }
+            res.append(res_dict)
         
-        return Reviewranking(ranking=ranking_list)  # Reviewrankingとして返す
+        return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
