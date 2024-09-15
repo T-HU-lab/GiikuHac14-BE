@@ -19,7 +19,9 @@ class StallCreate(StallBase):
 
 class StallResponse(StallBase):
     id: int
-
+    class Config:
+        orm_mode = True
+        from_attributes = True  # ORMとの互換性を有効にする
 
 
 # 屋台の作成エンドポイント
